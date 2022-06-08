@@ -20,7 +20,7 @@ contract Dao {
         uint256 votesAgainst;
         uint256 progress;
         mapping(address=>bool) votedAddresses;
-        bool votesCount;
+        bool votesCounted;
         bool passed;
     }
 
@@ -79,7 +79,7 @@ contract Dao {
         Proposal storage newProposal = proposals[newProposalId];
         newProposal.id = newProposalId;
         newProposal.description = _description;
-        newProposal.deadline = block.number + _deadline;
+        newProposal.deadline = _deadline;
 
         emit ProposalCreated(newProposalId, _description, msg.sender);
     }
@@ -87,8 +87,7 @@ contract Dao {
     function vote(uint256 _id, bool _vote) public {
         require(bytes(proposals[_id].description).length>0, "This proposal doesn't exits");
         require(isCanVote(_id, msg.sender), "You already voted this proposal");
-        require(proposals[_id].deadline <= block.number, "The deadline has passed for this proposal");
-        require(!proposals[_id].votesCount, "Proposal count already conducted");
+        require(proposals[_id].deadline >= block.timestamp, "The deadline has passed for this proposal");
 
         Proposal storage proposal = proposals[_id];
         if(_vote){
@@ -104,15 +103,15 @@ contract Dao {
 
     function countVotes(uint256 _id) onlyMember public {
         require(bytes(proposals[_id].description).length>0, "This proposal doesn't exits");
-        require(proposals[_id].deadline > block.number, "The deadline hasn't passed yet");
-        require(!proposals[_id].votesCount, "Proposal count already conducted");
+        require(proposals[_id].deadline < block.timestamp, "The deadline hasn't passed yet");
+        require(!proposals[_id].votesCounted, "Proposal count already conducted");
 
         Proposal storage proposal = proposals[_id];
 
         if(proposal.votesFor >= proposal.votesAgainst){
             proposal.passed = true;
         }
-        proposal.votesCount = true;
+        proposal.votesCounted = true;
 
         emit ProposalClosed(_id, proposal.passed, proposal.progress);
     }

@@ -11,6 +11,8 @@ describe("Dao", () => {
   let dao: Dao;
   let deployer: SignerWithAddress;
   let addr1: SignerWithAddress;
+  let addr2: SignerWithAddress;
+  let addr3: SignerWithAddress;
 
   beforeEach(async () => {
     const DaoToken = await ethers.getContractFactory("DaoToken");
@@ -21,7 +23,7 @@ describe("Dao", () => {
     dao = await Dao.deploy(daoToken.address);
     await dao.deployed();
 
-    [deployer, addr1] = await ethers.getSigners();
+    [deployer, addr1, addr2, addr3] = await ethers.getSigners();
   });
 
   describe("Proposal creation", () => {
@@ -48,6 +50,58 @@ describe("Dao", () => {
       )
         .to.emit(dao, "ProposalCreated")
         .withArgs(1, "Test description", addr1.address);
+    });
+  });
+
+  describe("Proposal voting", () => {
+    beforeEach(async () => {
+      await Promise.all([
+        daoToken.transfer(addr1.address, 1).then((receipt) => receipt.wait()),
+        daoToken.transfer(addr2.address, 1).then((receipt) => receipt.wait()),
+        dao
+          .createProposal("Test", Math.round(Date.now() / 1000) + 30)
+          .then((receipt) => receipt.wait()),
+      ]);
+    });
+
+    it("Non-existent identifier", async () => {
+      expect(dao.connect(addr1).vote(1337, true)).to.revertedWith(
+        "This proposal doesn't exits"
+      );
+    });
+
+    it("Address that not member of dao", async () => {
+      expect(dao.connect(addr3).vote(1, true)).to.revertedWith(
+        "Only DAO's member can do this"
+      );
+    });
+
+    it("Trying to vote twice", async () => {
+      const receipt = await dao.connect(addr1).vote(1, true);
+      await receipt.wait();
+
+      expect(dao.connect(addr1).vote(1, true)).to.revertedWith(
+        "You already voted this proposal"
+      );
+    });
+
+    it("Normal vote from 2 addresses", async () => {
+      expect(dao.connect(addr1).vote(1, true))
+        .to.emit(dao, "NewVote")
+        .withArgs(1, 0, addr1.address, 1, true, 1);
+
+      expect(dao.connect(addr2).vote(1, false))
+        .to.emit(dao, "NewVote")
+        .withArgs(1, 1, addr2.address, 1, false, 2);
+    });
+
+    it("Vote after deadline passed", (done) => {
+      setInterval(() => {
+        expect(dao.connect(addr1).vote(1, true)).to.revertedWith(
+          "The deadline has passed for this proposal"
+        );
+        done();
+      }, 5000);
     });
   });
 });
