@@ -41,8 +41,9 @@ describe("Dao", () => {
     });
 
     it("With address that was given the tokens", async () => {
-      const receipt = await daoToken.transfer(addr1.address, 10);
-      await receipt.wait();
+      await daoToken
+        .transfer(addr1.address, 10)
+        .then((receipt) => receipt.wait());
 
       expect(
         dao.connect(addr1).createProposal("Test description", 10),
@@ -58,10 +59,10 @@ describe("Dao", () => {
       await Promise.all([
         daoToken.transfer(addr1.address, 1).then((receipt) => receipt.wait()),
         daoToken.transfer(addr2.address, 1).then((receipt) => receipt.wait()),
-        dao
-          .createProposal("Test", Math.round(Date.now() / 1000) + 30)
-          .then((receipt) => receipt.wait()),
       ]);
+      await dao
+        .createProposal("Test", Math.round(Date.now() / 1000) + 30)
+        .then((receipt) => receipt.wait());
     });
 
     it("Non-existent identifier", async () => {
@@ -77,8 +78,10 @@ describe("Dao", () => {
     });
 
     it("Trying to vote twice", async () => {
-      const receipt = await dao.connect(addr1).vote(1, true);
-      await receipt.wait();
+      await dao
+        .connect(addr1)
+        .vote(1, true)
+        .then((receipt) => receipt.wait());
 
       expect(dao.connect(addr1).vote(1, true)).to.revertedWith(
         "You already voted this proposal"
@@ -95,13 +98,74 @@ describe("Dao", () => {
         .withArgs(1, 1, addr2.address, 1, false, 2);
     });
 
-    it("Vote after deadline passed", (done) => {
-      setInterval(() => {
-        expect(dao.connect(addr1).vote(1, true)).to.revertedWith(
-          "The deadline has passed for this proposal"
-        );
-        done();
-      }, 5000);
+    it("Vote after deadline passed", async () => {
+      await new Promise<void>((resolve) => setTimeout(() => resolve(), 10000));
+      expect(dao.connect(addr1).vote(1, true)).to.revertedWith(
+        "The deadline has passed for this proposal"
+      );
+    });
+  });
+
+  describe("Close proposal", () => {
+    it("Non-existent identifier", async () => {
+      expect(dao.countVotes(1337)).to.revertedWith(
+        "This proposal doesn't exits"
+      );
+    });
+
+    it("Close before deadline", async () => {
+      await dao
+        .createProposal("Test", Math.round(Date.now() / 1000) + 300)
+        .then((receipt) => receipt.wait());
+
+      expect(dao.countVotes(1)).to.revertedWith(
+        "The deadline hasn't passed yet"
+      );
+    });
+
+    it("Trying to close twice", async () => {
+      await dao
+        .createProposal("Test", Math.round(Date.now() / 1000) + 1)
+        .then((receipt) => receipt.wait());
+
+      await dao.countVotes(1).then((receipt) => receipt.wait());
+
+      expect(dao.countVotes(1)).to.revertedWith(
+        "Proposal count already conducted"
+      );
+    });
+
+    it("Close proposal with success", async () => {
+      await Promise.all([
+        daoToken.transfer(addr1.address, 10).then((receipt) => receipt.wait()),
+        daoToken.transfer(addr2.address, 1).then((receipt) => receipt.wait()),
+        daoToken.transfer(addr3.address, 15).then((receipt) => receipt.wait()),
+      ]);
+
+      await dao
+        .createProposal("Test", Math.round(Date.now() / 1000) + 60)
+        .then((receipt) => receipt.wait());
+
+      await Promise.all([
+        dao
+          .connect(addr1)
+          .vote(1, true)
+          .then((receipt) => receipt.wait()),
+        dao
+          .connect(addr2)
+          .vote(1, true)
+          .then((receipt) => receipt.wait()),
+        dao
+          .connect(addr3)
+          .vote(1, false)
+          .then((receipt) => receipt.wait()),
+      ]);
+
+      await new Promise<void>((resolve) => setTimeout(() => resolve(), 10000));
+
+      expect(dao.countVotes(1))
+        .to.emit(dao, "ProposalClosed")
+        .withArgs(1, true, 26);
     });
   });
 });
