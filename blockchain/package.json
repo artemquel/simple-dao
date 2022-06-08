@@ -33,5 +33,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0"
+  },
+  "scripts": {
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:ropsten": "hardhat run scripts/deploy.ts --network ropsten"
   }
 }
