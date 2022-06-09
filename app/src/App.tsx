@@ -7,7 +7,7 @@ import { spacings } from "./theme";
 const App = (): JSX.Element => {
   return (
     <Row justifyItems={"center"}>
-      <Row.Col span={20}>
+      <Row.Col span={18}>
         <>
           <div style={{ marginBottom: spacings["2"] }}>
             <Row justifyItems={"space-between"} alignItems={"center"}>
