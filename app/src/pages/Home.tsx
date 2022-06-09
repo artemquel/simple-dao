@@ -1,4 +1,4 @@
-import { Row, Table, TabList, Typography, Widget } from "web3uikit";
+import { Form, Row, Table, TabList, Typography, Widget } from "web3uikit";
 import { spacings } from "../theme";
 import { useState } from "react";
 
@@ -37,6 +37,30 @@ export const Home = (): JSX.Element => {
           data={proposals}
           pageSize={5}
         />
+        <div style={{ marginTop: spacings["2"], marginBottom: spacings["2"] }}>
+          <Form
+            title={"New proposal"}
+            buttonConfig={{
+              isLoading: false,
+              loadingText: "Loading",
+              text: "Create",
+              theme: "primary",
+            }}
+            data={[
+              {
+                inputWidth: "100%",
+                name: "description",
+                type: "textarea",
+                validation: {
+                  required: true,
+                },
+                value: "",
+              },
+            ]}
+            id={"proposal-form"}
+            onSubmit={(e) => window.console.log(e)}
+          />
+        </div>
       </TabList.Tab>
       <TabList.Tab tabKey={2} tabName={"Forum"}>
         <div>2</div>
