@@ -7,6 +7,7 @@ import "solidity-coverage";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "dotenv/config";
+import * as fs from "fs-extra";
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -17,6 +18,25 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
+
+task(
+  "copy-typings",
+  "Copy typechain typings to app directory",
+  async (taskArgs, hre) => {
+    await hre.run("typechain");
+    await new Promise<void>((resolve, reject) => {
+      fs.copy("typechain", "../app/src/typechain", (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    })
+      .then(() => console.log("Typings copied successfully"))
+      .catch((err) => console.error("Error raised during typings copy", err));
+  }
+);
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
