@@ -50,13 +50,21 @@ const eventReducer = (events: ContextEvents, action: Action): ContextEvents => {
       }
     case "PUSH":
       if (action.event?.type) {
-        return {
-          ...events,
-          [action.event?.type]: [
-            ...events[action.event?.type],
-            action.event?.payload,
-          ],
-        };
+        if (
+          !events[action.event.type]
+            .map(({ transactionHash }) => transactionHash)
+            .includes(action.event.payload.transactionHash)
+        ) {
+          return {
+            ...events,
+            [action.event?.type]: [
+              ...events[action.event?.type],
+              action.event?.payload,
+            ],
+          };
+        } else {
+          return events;
+        }
       } else {
         return events;
       }
@@ -118,6 +126,39 @@ const DaoProvider = (props: PropsWithChildren<Props>): JSX.Element => {
         ]);
 
         setHistoryLoading(false);
+
+        (web3 as Provider).once("block", () => {
+          contract.on(contract.filters.ProposalCreated(), (...args) => {
+            const [, , , , payload] = args;
+            dispatch({
+              type: "PUSH",
+              event: {
+                type: "ProposalCreated",
+                payload,
+              },
+            });
+          });
+          contract.on(contract.filters.NewVote(), (...args) => {
+            const [, , , , , , payload] = args;
+            dispatch({
+              type: "PUSH",
+              event: {
+                type: "NewVote",
+                payload,
+              },
+            });
+          });
+          contract.on(contract.filters.ProposalClosed(), (...args) => {
+            const [, , , payload] = args;
+            dispatch({
+              type: "PUSH",
+              event: {
+                type: "ProposalClosed",
+                payload,
+              },
+            });
+          });
+        });
       })();
     }
   }, [contract]);
