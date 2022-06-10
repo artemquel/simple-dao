@@ -47,9 +47,6 @@ export const Home = (): JSX.Element => {
           />
         </Row.Col>
         <Row.Col span={4}>
-          <Widget title={"Members"} info={"25"} />
-        </Row.Col>
-        <Row.Col span={4}>
           <Widget
             title={"Active"}
             isLoading={historyLoading}

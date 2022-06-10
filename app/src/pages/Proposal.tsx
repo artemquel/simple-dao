@@ -17,12 +17,14 @@ import { useDao } from "../context";
 import { FormDataReturned } from "web3uikit/dist/components/Form/types";
 import { trackPromise, usePromiseTracker } from "react-promise-tracker";
 import { areas } from "../constants";
+import { useMoralis } from "react-moralis";
 
 export const Proposal = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const { proposals, historyLoading, vote } = useDao();
+  const { account } = useMoralis();
 
   const { description, isPassed, inProgress, proposer, deadline, votes } =
     proposals.find((proposal) => id && proposal.id === Number(id)) || {
@@ -65,7 +67,7 @@ export const Proposal = () => {
         variant={"h1"}
         style={{ marginTop: spacings["1"], marginBottom: spacings["1"] }}
       >
-        Overview
+        Proposal #{id}
       </Typography>
       <div style={{ marginTop: spacings["1"], marginBottom: spacings["1"] }}>
         <Row justifyItems={"space-between"} alignItems={"center"}>
@@ -98,7 +100,7 @@ export const Proposal = () => {
         <Typography variant={"body18"}>{description}</Typography>
       </div>
       <Row justifyItems={"center"} alignItems={"center"}>
-        <Row.Col span={3}>
+        <Row.Col span={5}>
           <Widget
             title={"Progress"}
             isLoading={historyLoading}
@@ -115,14 +117,14 @@ export const Proposal = () => {
         </Row.Col>
         <Row.Col span={5}>
           <Widget
-            title={"Votes for"}
+            title={"For"}
             isLoading={historyLoading}
             info={votes.filter(({ votedFor }) => votedFor).length.toString()}
           />
         </Row.Col>
         <Row.Col span={5}>
           <Widget
-            title={"Votes against"}
+            title={"Against"}
             isLoading={historyLoading}
             info={votes.filter(({ votedFor }) => !votedFor).length.toString()}
           />
@@ -154,8 +156,15 @@ export const Proposal = () => {
             />
           </Row.Col>
           <Row.Col span={6}>
-            <Card cursorType={"default"}>
+            <Card cursorType={"default"} isDisabled>
               <Form
+                isDisabled={
+                  !!votes.find(
+                    (vote) =>
+                      vote.voter.toLowerCase() ===
+                      (account?.toLowerCase() || "")
+                  )
+                }
                 title={"Vote"}
                 buttonConfig={{
                   isLoading: isVoting,

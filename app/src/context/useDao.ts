@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "./Context";
 import { getUnixTime } from "date-fns";
 import { useNotification } from "web3uikit";
-import { Proposal, Vote } from "./types";
+import { Proposal, RevertError, Vote } from "./types";
 
 const useDao = () => {
   const { contract, signer, events, historyLoading } = useContext(Context);
@@ -40,8 +40,6 @@ const useDao = () => {
     }
   }, [events]);
 
-  window.console.log(events);
-
   useEffect(() => {
     setActiveProposalsCount(
       proposals.filter((proposal) => proposal.inProgress).length
@@ -58,12 +56,25 @@ const useDao = () => {
             .connect(signer)
             .createProposal(description, unixDeadline);
         } catch (e) {
-          notify({
-            type: "error",
-            title: "Error",
-            message: "Error during create proposal",
-            position: "bottomL",
-          });
+          if (
+            (e as RevertError).data.message.includes(
+              "Only DAO's member can do this"
+            )
+          ) {
+            notify({
+              type: "error",
+              title: "Error",
+              message: "Only DAO's member can do this",
+              position: "bottomL",
+            });
+          } else {
+            notify({
+              type: "error",
+              title: "Error",
+              message: "Error during create proposal",
+              position: "bottomL",
+            });
+          }
         }
       } else {
         notify({
@@ -83,12 +94,31 @@ const useDao = () => {
         try {
           await contract.connect(signer).vote(proposal, decision);
         } catch (e) {
-          notify({
-            type: "error",
-            title: "Error",
-            message: "Voting error",
-            position: "bottomL",
-          });
+          window.console.log(e);
+          if (
+            (e as RevertError).data.message.includes(
+              "Only DAO's member can do this"
+            )
+          ) {
+            notify({
+              type: "error",
+              title: "Error",
+              message: "Only DAO's member can do this",
+              position: "bottomL",
+            });
+          } else if (
+            (e as RevertError).data.message.includes(
+              "The deadline has passed for this proposal"
+            )
+          ) {
+          } else {
+            notify({
+              type: "error",
+              title: "Error",
+              message: "The deadline has passed for this proposal",
+              position: "bottomL",
+            });
+          }
         }
       } else {
         notify({

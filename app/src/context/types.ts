@@ -15,3 +15,12 @@ export type Vote = {
   votedFor: boolean;
   progress: number;
 };
+
+export type RevertError = {
+  code: number;
+  message: string;
+  data: {
+    code: number;
+    message: string;
+  };
+};
