@@ -13,7 +13,7 @@ const useDao = () => {
   const [proposalsCount, setProposalsCount] = useState<number>(0);
 
   useEffect(() => {
-    if (events?.ProposalCreated && events.ProposalClosed) {
+    if (events?.ProposalCreated && events.ProposalClosed && events.NewVote) {
       setProposals(
         events.ProposalCreated.map<Proposal>((eventCreate) => ({
           description: eventCreate.args.description,
@@ -26,6 +26,15 @@ const useDao = () => {
             eventClose.args.id.eq(eventCreate.args.id)
           )?.args.passed,
           deadline: eventCreate.args.deadline.toNumber(),
+          votes: events.NewVote.filter((voteEvent) =>
+            voteEvent.args.proposal.eq(eventCreate.args.id)
+          ).map<Vote>((voteEvent) => ({
+            votesFor: voteEvent.args.votesFor.toNumber(),
+            votesAgainst: voteEvent.args.votesAgainst.toNumber(),
+            voter: voteEvent.args.voter,
+            votedFor: voteEvent.args.votedFor,
+            progress: voteEvent.args.progress.toNumber(),
+          })),
         }))
       );
     }

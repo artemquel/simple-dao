@@ -24,16 +24,12 @@ export const Proposal = () => {
 
   const { proposals, historyLoading, vote } = useDao();
 
-  const { description, isPassed, inProgress, proposer, deadline } =
-    proposals.find((proposal) => id && proposal.id === Number(id)) || {};
+  const { description, isPassed, inProgress, proposer, deadline, votes } =
+    proposals.find((proposal) => id && proposal.id === Number(id)) || {
+      votes: [],
+    };
 
-  const { progress, maxProgress, votesFor, votesAgainst, votes } = {
-    progress: 4354,
-    maxProgress: 10000,
-    votesFor: 15,
-    votesAgainst: 25,
-    votes: [],
-  };
+  const maxProgress = 10000;
 
   const { promiseInProgress: isVoting } = usePromiseTracker({
     area: areas.proposalVote,
@@ -106,21 +102,29 @@ export const Proposal = () => {
           <Widget
             title={"Progress"}
             isLoading={historyLoading}
-            info={`${Math.round((progress / maxProgress) * 100).toString()}%`}
+            info={`${
+              votes.length
+                ? Math.round(
+                    (Math.max(...votes.map(({ progress }) => progress)) /
+                      maxProgress) *
+                      100
+                  ).toString()
+                : 0
+            }%`}
           />
         </Row.Col>
         <Row.Col span={3}>
           <Widget
             title={"Votes for"}
             isLoading={historyLoading}
-            info={votesFor.toString()}
+            info={votes.filter(({ votedFor }) => votedFor).length.toString()}
           />
         </Row.Col>
         <Row.Col span={3}>
           <Widget
             title={"Votes against"}
             isLoading={historyLoading}
-            info={votesAgainst.toString()}
+            info={votes.filter(({ votedFor }) => !votedFor).length.toString()}
           />
         </Row.Col>
         <Row.Col span={6}>
@@ -137,9 +141,17 @@ export const Proposal = () => {
         <Row>
           <Row.Col span={18}>
             <Table
+              key={votes.length} //TODO: fix it when library updated
               columnsConfig={"90% 10%"}
               header={["Address", "Vote"]}
-              data={votes}
+              data={votes.map(({ voter, votedFor }) => [
+                <Typography variant={"body16"}>{voter}</Typography>,
+                votedFor ? (
+                  <Tag text={"For"} color={"green"} />
+                ) : (
+                  <Tag text={"Against"} color={"red"} />
+                ),
+              ])}
               pageSize={5}
             />
           </Row.Col>

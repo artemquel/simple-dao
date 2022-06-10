@@ -5,13 +5,13 @@ export type Proposal = {
   isPassed: boolean;
   proposer: string;
   deadline: number;
+  votes: Vote[];
 };
 
 export type Vote = {
   votesFor: number;
   votesAgainst: number;
   voter: string;
-  proposal: number;
   votedFor: boolean;
   progress: number;
 };
