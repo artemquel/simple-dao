@@ -25,6 +25,7 @@ const useDao = () => {
           isPassed: !!events.ProposalClosed.find((eventClose) =>
             eventClose.args.id.eq(eventCreate.args.id)
           )?.args.passed,
+          deadline: eventCreate.args.deadline.toNumber(),
         }))
       );
     }

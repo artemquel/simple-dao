@@ -29,7 +29,8 @@ contract Dao {
     event ProposalCreated(
         uint256 id,
         string description,
-        address proposer
+        address proposer,
+        uint256 deadline
     );
 
     event NewVote(
@@ -81,7 +82,7 @@ contract Dao {
         newProposal.description = _description;
         newProposal.deadline = _deadline;
 
-        emit ProposalCreated(newProposalId, _description, msg.sender);
+        emit ProposalCreated(newProposalId, _description, msg.sender, _deadline);
     }
 
     function vote(uint256 _id, bool _vote) public {

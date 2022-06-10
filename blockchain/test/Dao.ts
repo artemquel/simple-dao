@@ -30,7 +30,7 @@ describe("Dao", () => {
     it("With correct params", async () => {
       expect(dao.createProposal("Test description", 10))
         .to.emit(dao, "ProposalCreated")
-        .withArgs(1, "Test description", deployer.address);
+        .withArgs(1, "Test description", deployer.address, 10);
     });
 
     it("With address that isn't token holder", async () => {
@@ -50,7 +50,7 @@ describe("Dao", () => {
         "Should create proposal"
       )
         .to.emit(dao, "ProposalCreated")
-        .withArgs(1, "Test description", addr1.address);
+        .withArgs(1, "Test description", addr1.address, 10);
     });
   });
 

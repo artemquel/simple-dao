@@ -12,9 +12,10 @@ import {
 } from "web3uikit";
 import { spacings } from "../theme";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export const Proposal = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
 
   const {

@@ -23,7 +23,7 @@ const App = (): JSX.Element => {
           </div>
           <Routes>
             <Route path={"/"} element={<Home />} />
-            <Route path={"/proposal"} element={<Proposal />} />
+            <Route path={"/proposal/:id"} element={<Proposal />} />
             <Route path={"*"} element={<Navigate to={"/"} replace />} />
           </Routes>
         </>

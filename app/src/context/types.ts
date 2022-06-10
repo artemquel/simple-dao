@@ -4,4 +4,5 @@ export type Proposal = {
   inProgress: boolean;
   isPassed: boolean;
   proposer: string;
+  deadline: number;
 };
