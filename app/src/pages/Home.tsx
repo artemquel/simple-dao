@@ -41,7 +41,7 @@ export const Home = (): JSX.Element => {
       <Row alignItems={"center"}>
         <Row.Col span={4}>
           <Widget
-            title={"Proposals created"}
+            title={"Total"}
             isLoading={historyLoading}
             info={proposalsCount.toString()}
           />
@@ -51,7 +51,7 @@ export const Home = (): JSX.Element => {
         </Row.Col>
         <Row.Col span={4}>
           <Widget
-            title={"Active proposals"}
+            title={"Active"}
             isLoading={historyLoading}
             info={activeProposalsCount.toString()}
           />

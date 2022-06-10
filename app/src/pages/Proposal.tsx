@@ -113,27 +113,25 @@ export const Proposal = () => {
             }%`}
           />
         </Row.Col>
-        <Row.Col span={3}>
+        <Row.Col span={5}>
           <Widget
             title={"Votes for"}
             isLoading={historyLoading}
             info={votes.filter(({ votedFor }) => votedFor).length.toString()}
           />
         </Row.Col>
-        <Row.Col span={3}>
+        <Row.Col span={5}>
           <Widget
             title={"Votes against"}
             isLoading={historyLoading}
             info={votes.filter(({ votedFor }) => !votedFor).length.toString()}
           />
         </Row.Col>
-        <Row.Col span={6}>
+        <Row.Col span={5}>
           <Widget
             title={"Deadline"}
             isLoading={historyLoading}
-            info={
-              deadline ? format(deadline * 1000, "dd.MM.yyyy HH:mm:ss") : ""
-            }
+            info={deadline ? format(deadline * 1000, "dd.MM.yyyy") : ""}
           />
         </Row.Col>
       </Row>
