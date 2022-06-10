@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Context } from "./Context";
 import { getUnixTime } from "date-fns";
 import { useNotification } from "web3uikit";
-import { Proposal } from "./types";
+import { Proposal, Vote } from "./types";
 
 const useDao = () => {
   const { contract, signer, events, historyLoading } = useContext(Context);
@@ -30,6 +30,8 @@ const useDao = () => {
       );
     }
   }, [events]);
+
+  window.console.log(events);
 
   useEffect(() => {
     setActiveProposalsCount(
@@ -66,12 +68,38 @@ const useDao = () => {
     [contract, signer, notify]
   );
 
+  const vote = useCallback(
+    async (proposal: number, decision: boolean) => {
+      if (contract && signer) {
+        try {
+          await contract.connect(signer).vote(proposal, decision);
+        } catch (e) {
+          notify({
+            type: "error",
+            title: "Error",
+            message: "Voting error",
+            position: "bottomL",
+          });
+        }
+      } else {
+        notify({
+          type: "error",
+          title: "Error",
+          message: "Blockchain connection error",
+          position: "bottomL",
+        });
+      }
+    },
+    [contract, signer, notify]
+  );
+
   return {
     createProposal,
     proposals,
     activeProposalsCount,
     proposalsCount,
     historyLoading,
+    vote,
   };
 };
 

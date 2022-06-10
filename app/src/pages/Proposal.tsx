@@ -13,32 +13,45 @@ import {
 import { spacings } from "../theme";
 import { format } from "date-fns";
 import { useNavigate, useParams } from "react-router-dom";
+import { useDao } from "../context";
+import { FormDataReturned } from "web3uikit/dist/components/Form/types";
+import { trackPromise, usePromiseTracker } from "react-promise-tracker";
+import { areas } from "../constants";
 
 export const Proposal = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const {
-    description,
-    passed,
-    createdBy,
-    progress,
-    maxProgress,
-    votesFor,
-    votesAgainst,
-    deadline,
-    votes,
-  } = {
-    description:
-      "There is sample description of proposal. You can vote for or against, but anyway i don't give a fuck.",
-    passed: true,
-    createdBy: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  const { proposals, historyLoading, vote } = useDao();
+
+  const { description, isPassed, inProgress, proposer, deadline } =
+    proposals.find((proposal) => id && proposal.id === Number(id)) || {};
+
+  const { progress, maxProgress, votesFor, votesAgainst, votes } = {
     progress: 4354,
     maxProgress: 10000,
     votesFor: 15,
     votesAgainst: 25,
-    deadline: Math.round(Date.now() / 1000),
     votes: [],
+  };
+
+  const { promiseInProgress: isVoting } = usePromiseTracker({
+    area: areas.proposalVote,
+  });
+
+  const onVote = ({ data }: FormDataReturned) => {
+    const [{ inputResult: decision }] = data;
+    if (id) {
+      trackPromise(
+        vote(
+          Number(id),
+          (typeof decision === "object"
+            ? (decision as string[])[0]
+            : decision) === "For"
+        ),
+        areas.proposalVote
+      );
+    }
   };
 
   return (
@@ -60,11 +73,13 @@ export const Proposal = () => {
       </Typography>
       <div style={{ marginTop: spacings["1"], marginBottom: spacings["1"] }}>
         <Row justifyItems={"space-between"} alignItems={"center"}>
-          <Row.Col span={1}>
-            {passed ? (
-              <Tag color={"green"} text={"Passed"} />
+          <Row.Col span={3}>
+            {inProgress && !historyLoading ? (
+              <Tag text={"In progress"} color={"blueLight"} />
+            ) : isPassed ? (
+              <Tag text={"Passed"} color={"green"} />
             ) : (
-              <Tag color={"red"} text={"Rejected"} />
+              <Tag text={"Rejected"} color={"red"} />
             )}
           </Row.Col>
           <Row.Col span={2}>
@@ -75,8 +90,8 @@ export const Proposal = () => {
                 </Typography>
               </Row.Col>
               <Row.Col span={1}>
-                <Tooltip content={createdBy} position={"left"}>
-                  <Blockie seed={createdBy} />
+                <Tooltip content={proposer || ""} position={"left"}>
+                  <Blockie seed={proposer || ""} />
                 </Tooltip>
               </Row.Col>
             </Row>
@@ -90,19 +105,31 @@ export const Proposal = () => {
         <Row.Col span={3}>
           <Widget
             title={"Progress"}
+            isLoading={historyLoading}
             info={`${Math.round((progress / maxProgress) * 100).toString()}%`}
           />
         </Row.Col>
         <Row.Col span={3}>
-          <Widget title={"Votes for"} info={votesFor.toString()} />
+          <Widget
+            title={"Votes for"}
+            isLoading={historyLoading}
+            info={votesFor.toString()}
+          />
         </Row.Col>
         <Row.Col span={3}>
-          <Widget title={"Votes against"} info={votesAgainst.toString()} />
+          <Widget
+            title={"Votes against"}
+            isLoading={historyLoading}
+            info={votesAgainst.toString()}
+          />
         </Row.Col>
         <Row.Col span={6}>
           <Widget
             title={"Deadline"}
-            info={format(deadline * 1000, "dd.MM.yyyy HH:mm:ss")}
+            isLoading={historyLoading}
+            info={
+              deadline ? format(deadline * 1000, "dd.MM.yyyy HH:mm:ss") : ""
+            }
           />
         </Row.Col>
       </Row>
@@ -121,7 +148,7 @@ export const Proposal = () => {
               <Form
                 title={"Vote"}
                 buttonConfig={{
-                  isLoading: false,
+                  isLoading: isVoting,
                   loadingText: "Loading",
                   text: "Vote",
                   theme: "primary",
@@ -138,7 +165,7 @@ export const Proposal = () => {
                     value: "",
                   },
                 ]}
-                onSubmit={(e) => window.console.log(e)}
+                onSubmit={onVote}
                 id={"propsal-vote"}
               />
             </Card>

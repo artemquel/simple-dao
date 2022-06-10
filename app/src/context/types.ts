@@ -6,3 +6,12 @@ export type Proposal = {
   proposer: string;
   deadline: number;
 };
+
+export type Vote = {
+  votesFor: number;
+  votesAgainst: number;
+  voter: string;
+  proposal: number;
+  votedFor: boolean;
+  progress: number;
+};
