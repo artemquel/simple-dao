@@ -23,7 +23,7 @@ export const Proposal = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const { proposals, historyLoading, vote } = useDao();
+  const { proposals, historyLoading, vote, closeProposal } = useDao();
   const { account } = useMoralis();
 
   const { description, isPassed, inProgress, proposer, deadline, votes } =
@@ -35,6 +35,10 @@ export const Proposal = () => {
 
   const { promiseInProgress: isVoting } = usePromiseTracker({
     area: areas.proposalVote,
+  });
+
+  const { promiseInProgress: isProposalClose } = usePromiseTracker({
+    area: areas.proposalClose,
   });
 
   const onVote = ({ data }: FormDataReturned) => {
@@ -50,6 +54,10 @@ export const Proposal = () => {
         areas.proposalVote
       );
     }
+  };
+
+  const onProposalClose = () => {
+    trackPromise(closeProposal(Number(id)), areas.proposalClose);
   };
 
   return (
@@ -129,12 +137,27 @@ export const Proposal = () => {
             info={votes.filter(({ votedFor }) => !votedFor).length.toString()}
           />
         </Row.Col>
-        <Row.Col span={5}>
+        <Row.Col span={9}>
           <Widget
             title={"Deadline"}
             isLoading={historyLoading}
             info={deadline ? format(deadline * 1000, "dd.MM.yyyy") : ""}
-          />
+          >
+            {proposer?.toLowerCase() === (account || "") &&
+            (deadline || 0) <= Date.now() / 1000 &&
+            inProgress ? (
+              <Button
+                onClick={onProposalClose}
+                loadingText={"Loading"}
+                isLoading={isProposalClose}
+                text="Close"
+                theme="primary"
+                type="button"
+              />
+            ) : (
+              <></>
+            )}
+          </Widget>
         </Row.Col>
       </Row>
       <div style={{ marginTop: spacings["1"], marginBottom: spacings["1"] }}>
@@ -163,7 +186,7 @@ export const Proposal = () => {
                     (vote) =>
                       vote.voter.toLowerCase() ===
                       (account?.toLowerCase() || "")
-                  )
+                  ) || !inProgress
                 }
                 title={"Vote"}
                 buttonConfig={{

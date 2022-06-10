@@ -94,7 +94,6 @@ const useDao = () => {
         try {
           await contract.connect(signer).vote(proposal, decision);
         } catch (e) {
-          window.console.log(e);
           if (
             (e as RevertError).data.message.includes(
               "Only DAO's member can do this"
@@ -111,14 +110,45 @@ const useDao = () => {
               "The deadline has passed for this proposal"
             )
           ) {
-          } else {
             notify({
               type: "error",
               title: "Error",
               message: "The deadline has passed for this proposal",
               position: "bottomL",
             });
+          } else {
+            notify({
+              type: "error",
+              title: "Error",
+              message: "Voting error",
+              position: "bottomL",
+            });
           }
+        }
+      } else {
+        notify({
+          type: "error",
+          title: "Error",
+          message: "Blockchain connection error",
+          position: "bottomL",
+        });
+      }
+    },
+    [contract, signer, notify]
+  );
+
+  const closeProposal = useCallback(
+    async (id: number) => {
+      if (contract && signer) {
+        try {
+          await contract.connect(signer).countVotes(id);
+        } catch (e) {
+          notify({
+            type: "error",
+            title: "Error",
+            message: "Proposal close error",
+            position: "bottomL",
+          });
         }
       } else {
         notify({
@@ -139,6 +169,7 @@ const useDao = () => {
     proposalsCount,
     historyLoading,
     vote,
+    closeProposal,
   };
 };
 
