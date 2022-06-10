@@ -11,9 +11,18 @@ const useDao = () => {
     async (description: string, deadline: string) => {
       if (contract && signer) {
         const unixDeadline = getUnixTime(new Date(deadline));
-        await contract
-          .connect(signer)
-          .createProposal(description, unixDeadline);
+        try {
+          await contract
+            .connect(signer)
+            .createProposal(description, unixDeadline);
+        } catch (e) {
+          notify({
+            type: "error",
+            title: "Error",
+            message: "Error during create proposal",
+            position: "bottomL",
+          });
+        }
       } else {
         notify({
           type: "error",

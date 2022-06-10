@@ -16,10 +16,12 @@ export const Home = (): JSX.Element => {
   const { createProposal } = useDao();
 
   const onProposalCreate = async ({ data }: FormDataReturned) => {
-    const [{ inputResult: dateArr }, { inputResult: description }] = data;
-
+    const [{ inputResult: date }, { inputResult: description }] = data;
     trackPromise(
-      createProposal(description as string, (dateArr as string[])[0]),
+      createProposal(
+        description as string,
+        typeof date === "object" ? (date as string[])[0] : date
+      ),
       areas.proposalCreating
     );
   };
@@ -58,6 +60,7 @@ export const Home = (): JSX.Element => {
         />
         <div style={{ marginTop: spacings["2"], marginBottom: spacings["2"] }}>
           <Form
+            key={Number(isProposalCreating)}
             title={"New proposal"}
             buttonConfig={{
               isLoading: isProposalCreating,
@@ -72,7 +75,7 @@ export const Home = (): JSX.Element => {
                 validation: {
                   required: true,
                 },
-                value: "",
+                value: new Date().toString(),
               },
               {
                 inputWidth: "100%",
