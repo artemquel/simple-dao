@@ -1,9 +1,28 @@
 import { Form, Row, Table, TabList, Typography, Widget } from "web3uikit";
 import { spacings } from "../theme";
 import { useState } from "react";
+import { useDao } from "../context";
+import { FormDataReturned } from "web3uikit/dist/components/Form/types";
+import { trackPromise, usePromiseTracker } from "react-promise-tracker";
+import { areas } from "../constants";
 
 export const Home = (): JSX.Element => {
   const [proposals, setProposals] = useState<any[]>([]);
+
+  const { promiseInProgress: isProposalCreating } = usePromiseTracker({
+    area: areas.proposalCreating,
+  });
+
+  const { createProposal } = useDao();
+
+  const onProposalCreate = async ({ data }: FormDataReturned) => {
+    const [{ inputResult: dateArr }, { inputResult: description }] = data;
+
+    trackPromise(
+      createProposal(description as string, (dateArr as string[])[0]),
+      areas.proposalCreating
+    );
+  };
 
   return (
     <TabList defaultActiveKey={1} tabStyle={"bar"}>
@@ -41,12 +60,20 @@ export const Home = (): JSX.Element => {
           <Form
             title={"New proposal"}
             buttonConfig={{
-              isLoading: false,
+              isLoading: isProposalCreating,
               loadingText: "Loading",
               text: "Create",
               theme: "primary",
             }}
             data={[
+              {
+                name: "deadline",
+                type: "date",
+                validation: {
+                  required: true,
+                },
+                value: "",
+              },
               {
                 inputWidth: "100%",
                 name: "description",
@@ -58,7 +85,7 @@ export const Home = (): JSX.Element => {
               },
             ]}
             id={"proposal-form"}
-            onSubmit={(e) => window.console.log(e)}
+            onSubmit={onProposalCreate}
           />
         </div>
       </TabList.Tab>

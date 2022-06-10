@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useReducer, useState } from "react";
-import { ContextEvents, DaoContext } from "./Context";
+import { ContextEvents, Context } from "./Context";
 import {
   Dao,
   NewVoteEvent,
@@ -9,6 +9,7 @@ import {
 import { useMoralis } from "react-moralis";
 import { Dao__factory } from "../typechain";
 import { Provider } from "@ethersproject/providers";
+import { Signer } from "ethers";
 
 type Props = {
   address: string;
@@ -72,18 +73,19 @@ const DaoProvider = (props: PropsWithChildren<Props>): JSX.Element => {
   });
 
   const [contract, setContract] = useState<Dao | undefined>();
+  const [signer, setSigner] = useState<Signer | undefined>();
   const [historyLoading, setHistoryLoading] = useState<boolean>(false);
 
   const { web3, isWeb3Enabled } = useMoralis();
-
   useEffect(() => {
     if (isWeb3Enabled) {
       setContract(Dao__factory.connect(props.address, web3 as Provider));
+      setSigner(web3?.getSigner());
     } else {
       setContract(undefined);
       dispatch({ type: "CLEAR" });
     }
-  }, [isWeb3Enabled, web3]);
+  }, [isWeb3Enabled, web3, props.address]);
 
   useEffect(() => {
     if (contract) {
@@ -121,9 +123,9 @@ const DaoProvider = (props: PropsWithChildren<Props>): JSX.Element => {
   }, [contract]);
 
   return (
-    <DaoContext.Provider value={{ events, contract, historyLoading }}>
+    <Context.Provider value={{ events, contract, signer, historyLoading }}>
       {props.children}
-    </DaoContext.Provider>
+    </Context.Provider>
   );
 };
 
