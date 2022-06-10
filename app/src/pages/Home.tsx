@@ -1,19 +1,22 @@
-import { Form, Row, Table, TabList, Typography, Widget } from "web3uikit";
+import { Form, Row, Table, TabList, Tag, Typography, Widget } from "web3uikit";
 import { spacings } from "../theme";
-import { useState } from "react";
 import { useDao } from "../context";
 import { FormDataReturned } from "web3uikit/dist/components/Form/types";
 import { trackPromise, usePromiseTracker } from "react-promise-tracker";
 import { areas } from "../constants";
 
 export const Home = (): JSX.Element => {
-  const [proposals, setProposals] = useState<any[]>([]);
-
   const { promiseInProgress: isProposalCreating } = usePromiseTracker({
     area: areas.proposalCreating,
   });
 
-  const { createProposal } = useDao();
+  const {
+    createProposal,
+    proposals,
+    activeProposalsCount,
+    proposalsCount,
+    historyLoading,
+  } = useDao();
 
   const onProposalCreate = async ({ data }: FormDataReturned) => {
     const [{ inputResult: date }, { inputResult: description }] = data;
@@ -37,13 +40,21 @@ export const Home = (): JSX.Element => {
         </Typography>
         <Row alignItems={"center"}>
           <Row.Col span={4}>
-            <Widget title={"Proposals created"} info={"56"} />
+            <Widget
+              title={"Proposals created"}
+              isLoading={historyLoading}
+              info={proposalsCount.toString()}
+            />
           </Row.Col>
           <Row.Col span={4}>
             <Widget title={"Members"} info={"25"} />
           </Row.Col>
           <Row.Col span={4}>
-            <Widget title={"Active proposals"} info={"6"} />
+            <Widget
+              title={"Active proposals"}
+              isLoading={historyLoading}
+              info={activeProposalsCount.toString()}
+            />
           </Row.Col>
         </Row>
         <Typography
@@ -53,14 +64,26 @@ export const Home = (): JSX.Element => {
           Recent proposals
         </Typography>
         <Table
+          key={proposals.length} //TODO: fix it when library updated
+          isLoading={historyLoading}
           columnsConfig={"10% 70% 20%"}
           header={["ID", "Description", "Status"]}
-          data={proposals}
+          data={proposals.map(({ id, description, inProgress, isPassed }) => [
+            <Typography variant={"body16"}>{id}</Typography>,
+            <Typography variant={"body16"}>{description}</Typography>,
+            inProgress ? (
+              <Tag text={"In progress"} color={"blueLight"} />
+            ) : isPassed ? (
+              <Tag text={"Passed"} color={"green"} />
+            ) : (
+              <Tag text={"Rejected"} color={"red"} />
+            ),
+          ])}
           pageSize={5}
         />
         <div style={{ marginTop: spacings["2"], marginBottom: spacings["2"] }}>
           <Form
-            key={Number(isProposalCreating)}
+            key={Number(isProposalCreating)} //TODO: fix it when library updated
             title={"New proposal"}
             buttonConfig={{
               isLoading: isProposalCreating,
